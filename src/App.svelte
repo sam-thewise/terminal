@@ -1,10 +1,37 @@
 <script lang="ts">
-  import Ps1 from './components/Ps1.svelte';
-  import Input from './components/Input.svelte';
-  import History from './components/History.svelte';
-  import { theme } from './stores/theme';
-</script>
+  import Console from './components/Console.svelte';
 
+  import { sharedState } from './states/shared.svelte';
+
+  import { CurrentGameState } from './interfaces/sharedState';
+
+  import Dialogue from './components/Dialogue.svelte';
+
+  //preload /sounds/bg-calm.mp3
+  let bgMusic = $state( new Audio('/sound/bg-calm.mp3') );
+  bgMusic.loop = true;
+  bgMusic.load();
+
+  let isMusicLoaded = $state(false);
+
+  let isMusicPlaying = $state(false);
+
+  bgMusic.addEventListener('loadedmetadata', () => {
+    isMusicLoaded = true;
+  });
+
+  $effect(() => {
+    console.log('currentGameState changed', sharedState.currentGameState, isMusicLoaded);
+    if (sharedState.currentGameState === CurrentGameState.CONSOLE) {
+      bgMusic.pause();
+    } else if (isMusicLoaded && !isMusicPlaying) {
+      console.log('playing music');
+      bgMusic.currentTime = 0;
+      bgMusic.play();
+      isMusicPlaying = true;
+    }
+  });
+</script>
 <svelte:head>
   {#if import.meta.env.VITE_TRACKING_ENABLED === 'true'}
     <script
@@ -16,15 +43,16 @@
   {/if}
 </svelte:head>
 
-<main
-  class="h-full border-2 rounded-md p-4 overflow-auto text-xs sm:text-sm md:text-base"
-  style={`background-color: ${$theme.background}; color: ${$theme.foreground}; border-color: ${$theme.green};`}
->
-  <History />
-
-  <div class="flex flex-col md:flex-row">
-    <Ps1 />
-
-    <Input />
+{#if sharedState.currentGameState === CurrentGameState.CONSOLE}
+  <Console />
+{:else}
+  <div class="h-screen flex items-center justify-center">
+    {#if isMusicLoaded}
+    <Dialogue />
+    {:else}
+    <div class="text-center">
+      <p>Loading...</p>
+    </div>
+    {/if}
   </div>
-</main>
+{/if}
