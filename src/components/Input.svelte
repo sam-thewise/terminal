@@ -36,7 +36,7 @@
         track(commandName, ...args);
       }
 
-      const commandFunction = commands[commandName];
+      const commandFunction = commands[commandName.toLocaleLowerCase()];
 
       if (commandFunction) {
         const output = await commandFunction(args);
